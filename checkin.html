@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<title>THT — Sunday Check-In</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:linear-gradient(145deg,#4A0F1C,#6B1A2A,#7D2035);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:#fff}
+.box{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,.25);border-radius:20px;padding:32px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+.cross{font-size:36px;color:#C9A84C;margin-bottom:8px}
+h1{font-family:'Cinzel',serif;font-size:14px;color:#E8C97A;letter-spacing:.06em;margin-bottom:4px;line-height:1.5}
+.sub{font-size:10px;color:rgba(232,201,122,.5);letter-spacing:.08em;margin-bottom:24px}
+.scanner-area{background:rgba(0,0,0,.4);border:2px solid rgba(201,168,76,.4);border-radius:14px;padding:20px;margin-bottom:20px;position:relative;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#reader{width:100%}
+.scan-line{position:absolute;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);animation:scan 2s infinite;top:50%}
+@keyframes scan{0%{top:20%}50%{top:80%}100%{top:20%}}
+.manual-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.1);border:1.5px solid rgba(201,168,76,.3);border-radius:9px;color:#fff;font-size:14px;text-align:center;outline:none;font-family:'Lato',sans-serif;letter-spacing:.1em}
+.manual-input::placeholder{color:rgba(255,255,255,.3)}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,#A07830,#E8C97A);border:none;border-radius:9px;color:#4A0F1C;font-family:'Cinzel',serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:10px;transition:all .2s}
+.btn:hover{transform:translateY(-1px)}
+.result{margin-top:18px;border-radius:12px;padding:16px;display:none;animation:pop .3s cubic-bezier(.4,0,.2,1)}
+.result.success{background:rgba(40,130,80,.3);border:1px solid rgba(40,130,80,.5)}
+.result.error{background:rgba(176,48,48,.3);border:1px solid rgba(176,48,48,.5)}
+.result.already{background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4)}
+.result.show{display:block}
+@keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.res-photo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid rgba(201,168,76,.6);margin:0 auto 10px;display:block}
+.res-name{font-family:'Cinzel',serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.res-info{font-size:12px;opacity:.8}
+.res-icon{font-size:32px;margin-bottom:8px}
+.service-sel{width:100%;padding:9px 12px;background:rgba(255,255,255,.1);border:1.5px solid rgba(201,168,76,.3);border-radius:9px;color:#fff;font-family:'Lato',sans-serif;font-size:13px;outline:none;margin-bottom:14px}
+.service-sel option{background:#3A0C18;color:#fff}
+.tabs{display:flex;gap:0;margin-bottom:16px;background:rgba(0,0,0,.3);border-radius:9px;overflow:hidden}
+.tab{flex:1;padding:9px;border:none;background:none;color:rgba(255,255,255,.6);font-family:'Lato',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.tab.on{background:rgba(201,168,76,.25);color:#E8C97A}
+.count-bar{background:rgba(0,0,0,.3);border-radius:10px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-around}
+.count-item{text-align:center}
+.count-val{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#E8C97A}
+.count-lbl{font-size:10px;color:rgba(255,255,255,.5)}
+.footer{font-size:9px;color:rgba(255,255,255,.2);text-align:center;margin-top:16px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="cross">✝</div>
+  <h1>Trinity Healing Temple<br>of Jesus Church, Inc.</h1>
+  <div class="sub">SUNDAY CHECK-IN PORTAL</div>
+
+  <!-- Service selector -->
+  <select class="service-sel" id="serviceId">
+    <option value="">— Select Today's Service —</option>
+  </select>
+
+  <!-- Count bar -->
+  <div class="count-bar">
+    <div class="count-item"><div class="count-val" id="cnt-present">0</div><div class="count-lbl">Present</div></div>
+    <div class="count-item"><div class="count-val" id="cnt-today">—</div><div class="count-lbl">Total Members</div></div>
+    <div class="count-item"><div class="count-val" id="cnt-rate">0%</div><div class="count-lbl">Attendance</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab on" onclick="switchMode('qr',this)">📷 QR Scan</button>
+    <button class="tab" onclick="switchMode('manual',this)">⌨️ Manual</button>
+  </div>
+
+  <!-- QR Scanner -->
+  <div id="qr-mode">
+    <div class="scanner-area">
+      <div id="reader"></div>
+      <div class="scan-line"></div>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:-8px">Point camera at member's QR code</div>
+  </div>
+
+  <!-- Manual token entry -->
+  <div id="manual-mode" style="display:none">
+    <input class="manual-input" type="text" id="manual-token" placeholder="Enter Member No. (e.g. THT-0001)" maxlength="20"/>
+    <button class="btn" onclick="manualCheckin()">✅ Check In</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="result">
+    <div class="res-icon" id="res-icon">✅</div>
+    <img class="res-photo" id="res-photo" style="display:none" alt=""/>
+    <div class="res-name" id="res-name"></div>
+    <div class="res-info" id="res-info"></div>
+  </div>
+</div>
+
+<div class="footer">
+  Topoe Community · Lower New Georgia · Monrovia, Liberia<br>
+  Trinity CMS v2.0 — Sunday Check-In
+</div>
+
+<!-- jsQR for QR scanning -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script>
+const API = '/api';
+let scanning = false;
+let video, canvas, ctx;
+let checkinCount = 0;
+let totalMembers = 0;
+
+// ── Load services ─────────────────────────────────────────
+async function loadServices() {
+  try {
+    const res = await fetch(`${API}/attendance/services?limit=10`);
+    const data = await res.json();
+    const sel = document.getElementById('serviceId');
+    (data || []).forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${s.service_type_name} — ${s.service_date}`;
+      if (s.service_date === new Date().toISOString().slice(0,10)) {
+        opt.selected = true;
+        checkinCount = s.total_present || 0;
+      }
+      sel.appendChild(opt);
+    });
+    updateCount();
+  } catch(e) { console.log('API not connected — demo mode'); }
+}
+
+async function loadTotal() {
+  try {
+    const res = await fetch(`${API}/members?limit=1`);
+    const d = await res.json();
+    totalMembers = d.total || 265;
+    document.getElementById('cnt-today').textContent = totalMembers;
+  } catch { document.getElementById('cnt-today').textContent = '265'; totalMembers = 265; }
+}
+
+function updateCount() {
+  document.getElementById('cnt-present').textContent = checkinCount;
+  const rate = totalMembers > 0 ? Math.round(checkinCount/totalMembers*100) : 0;
+  document.getElementById('cnt-rate').textContent = rate + '%';
+}
+
+// ── QR Scanner ────────────────────────────────────────────
+function switchMode(mode, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('qr-mode').style.display = mode === 'qr' ? '' : 'none';
+  document.getElementById('manual-mode').style.display = mode === 'manual' ? '' : 'none';
+  if (mode === 'qr') startCamera();
+  else stopCamera();
+}
+
+async function startCamera() {
+  if (scanning) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', true);
+    video.play();
+
+    canvas = document.createElement('canvas');
+    ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    const reader = document.getElementById('reader');
+    reader.innerHTML = '';
+    reader.appendChild(video);
+    video.style.width = '100%';
+    video.style.borderRadius = '8px';
+
+    scanning = true;
+    requestAnimationFrame(scanFrame);
+  } catch (e) {
+    document.getElementById('reader').innerHTML =
+      '<div style="padding:20px;font-size:12px;color:rgba(255,255,255,.6)">📷 Camera access required.<br>Allow camera permission to scan QR codes.</div>';
+  }
+}
+
+function stopCamera() {
+  scanning = false;
+  if (video?.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+  }
+}
+
+function scanFrame() {
+  if (!scanning || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (scanning) requestAnimationFrame(scanFrame);
+    return;
+  }
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: 'dontInvert'
+  });
+  if (code) {
+    handleQRScan(code.data);
+    return; // pause briefly
+  }
+  requestAnimationFrame(scanFrame);
+}
+
+async function handleQRScan(data) {
+  scanning = false; // pause scanner
+  try {
+    const obj = JSON.parse(data);
+    if (obj.type === 'tht_checkin' && obj.token) {
+      await doCheckin({ token: obj.token });
+    } else if (obj.member_id) {
+      await doCheckin({ token: obj.token || data });
+    } else {
+      showResult('error', '❌', 'Invalid QR Code', 'This QR code is not a valid church check-in code.');
+    }
+  } catch {
+    // Try as raw token
+    await doCheckin({ token: data });
+  }
+  setTimeout(() => { scanning = true; requestAnimationFrame(scanFrame); }, 3000);
+}
+
+async function manualCheckin() {
+  const val = document.getElementById('manual-token').value.trim().toUpperCase();
+  if (!val) return;
+  await doCheckin({ member_no: val });
+  document.getElementById('manual-token').value = '';
+}
+
+async function doCheckin(payload) {
+  const serviceId = document.getElementById('serviceId').value;
+  if (!serviceId) {
+    showResult('error', '⚠️', 'No Service Selected', 'Please select today\'s service first.');
+    return;
+  }
+
+  try {
+    const body = { service_id: parseInt(serviceId), ...payload };
+    const res  = await fetch(`${API}/attendance/qr`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+
+    if (res.ok && data.member) {
+      const m = data.member;
+      if (data.already_in) {
+        showResult('already', '🔄', m.name, `Already checked in · ${m.dept || ''}`);
+      } else {
+        checkinCount++;
+        updateCount();
+        showResult('success', '✅', data.message || `Welcome, ${m.name}!`,
+          `${m.member_no} · ${m.dept || 'Member'}`, m.photo_url);
+        // Vibrate on success (mobile)
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      }
+    } else {
+      showResult('error', '❌', 'Check-In Failed', data.error || 'Member not found. Please try again.');
+    }
+  } catch (e) {
+    // Demo mode — simulate success
+    checkinCount++;
+    updateCount();
+    showResult('success', '✅', 'Welcome!', 'Demo mode — API not connected yet.');
+  }
+}
+
+function showResult(type, icon, name, info, photoUrl) {
+  const el = document.getElementById('result');
+  el.className = `result ${type} show`;
+  document.getElementById('res-icon').textContent = icon;
+  document.getElementById('res-name').textContent = name;
+  document.getElementById('res-info').textContent = info;
+  const photo = document.getElementById('res-photo');
+  if (photoUrl) { photo.src = photoUrl; photo.style.display = 'block'; }
+  else { photo.style.display = 'none'; }
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── Init ─────────────────────────────────────────────────
+loadServices();
+loadTotal();
+startCamera();
+
+// Enter key on manual input
+document.getElementById('manual-token').addEventListener('keydown', e => {
+  if (e.key === 'Enter') manualCheckin();
+});
+</script>
+</body>
+</html>
